@@ -84,6 +84,9 @@ const getPlaneSVG = (color = '#3b82f6') => `
 
 // Fetch and update logic
 async function fetchAndPlot(callsign) {
+    const targetUrl = 'https://opensky-network.org/api/states/all';
+    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+    
     try {
         const headers = {};
         const username = localStorage.getItem('opensky_username');
@@ -92,21 +95,47 @@ async function fetchAndPlot(callsign) {
             headers['Authorization'] = 'Basic ' + btoa(username + ':' + password);
         }
 
-        const targetUrl = 'https://opensky-network.org/api/states/all';
-        const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+        console.log(`[DEBUG] Target URL: ${targetUrl}`);
+        console.log(`[DEBUG] Proxy URL: ${proxyUrl}`);
+        console.log(`[DEBUG] Headers:`, headers);
+
         const res = await fetch(proxyUrl, { headers });
-        if (!res.ok) throw new Error('API Rate limit or network error');
+        console.log(`[DEBUG] Response Status: ${res.status} ${res.statusText}`);
+
+        if (!res.ok) {
+            const errorText = await res.text().catch(() => 'Could not read response body');
+            console.error(`[DEBUG] Error Response Body:`, errorText);
+            throw new Error(`HTTP ${res.status}: ${res.statusText || 'Unknown'}`);
+        }
         
-        const data = await res.json();
+        let data;
+        const textData = await res.text();
+        try {
+            data = JSON.parse(textData);
+        } catch (jsonErr) {
+            console.error(`[DEBUG] Failed to parse JSON. Raw body:`, textData);
+            throw new Error(`Failed to parse JSON response: ${jsonErr.message}`);
+        }
+
+        console.log(`[DEBUG] States Count: ${data.states ? data.states.length : 0}`);
+
+        if (!data.states || !Array.isArray(data.states)) {
+            throw new Error('Response is missing "states" array');
+        }
+
         const state = data.states.find(s => s[1] && s[1].trim() === callsign);
         
         if (!state) {
+            console.log(`[DEBUG] Callsign "${callsign}" not found in OpenSky states.`);
             return false;
         }
 
         const [icao24, csign, origin, time_pos, last_contact, lng, lat, baro_alt, on_ground, velocity, heading] = state;
         
-        if (lat === null || lng === null) return false;
+        if (lat === null || lng === null) {
+            console.warn(`[DEBUG] Callsign "${callsign}" found, but coordinates are null.`);
+            return false;
+        }
 
         const pos = [lat, lng];
         const speedMph = velocity ? Math.round(velocity * 2.23694) : 0;
@@ -121,8 +150,8 @@ async function fetchAndPlot(callsign) {
 
         return true;
     } catch (err) {
-        console.error(err);
-        return null; // Null means error, false means not found
+        console.error(`[DEBUG] Error:`, err);
+        return { error: err.message };
     }
 }
 
@@ -200,12 +229,12 @@ searchForm.addEventListener('submit', async (e) => {
     searchBtnText.textContent = 'Searching...';
     searchSpinner.classList.remove('hidden');
     
-    const found = await fetchAndPlot(callsign);
+    const result = await fetchAndPlot(callsign);
     
     searchBtnText.textContent = 'Track Flight';
     searchSpinner.classList.add('hidden');
 
-    if (found === true) {
+    if (result === true) {
         currentCallsign = callsign;
         showToast('Flight found! Initiating live tracking.', 'success');
         
@@ -213,10 +242,12 @@ searchForm.addEventListener('submit', async (e) => {
         pollInterval = setInterval(() => {
             fetchAndPlot(currentCallsign);
         }, 30000); // Poll every 30s
-    } else if (found === false) {
+    } else if (result === false) {
         showToast('Flight not found. It may not be airborne or the callsign is incorrect.');
+    } else if (result && result.error) {
+        showToast(`Error: ${result.error}`);
     } else {
-        showToast('Error communicating with OpenSky API. Rate limit may apply.');
+        showToast('Unknown error occurred.');
     }
 });
 
