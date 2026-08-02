@@ -92,7 +92,9 @@ async function fetchAndPlot(callsign) {
             headers['Authorization'] = 'Basic ' + btoa(username + ':' + password);
         }
 
-        const res = await fetch('https://opensky-network.org/api/states/all', { headers });
+        const targetUrl = 'https://opensky-network.org/api/states/all';
+        const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+        const res = await fetch(proxyUrl, { headers });
         if (!res.ok) throw new Error('API Rate limit or network error');
         
         const data = await res.json();
