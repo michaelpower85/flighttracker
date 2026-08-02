@@ -84,8 +84,11 @@ const getPlaneSVG = (color = '#3b82f6') => `
 
 // Fetch and update logic
 async function fetchAndPlot(callsign) {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const targetUrl = 'https://opensky-network.org/api/states/all';
-    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+    const fetchUrl = isLocalhost 
+        ? '/api/opensky' 
+        : `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
     
     try {
         const headers = {};
@@ -96,10 +99,10 @@ async function fetchAndPlot(callsign) {
         }
 
         console.log(`[DEBUG] Target URL: ${targetUrl}`);
-        console.log(`[DEBUG] Proxy URL: ${proxyUrl}`);
+        console.log(`[DEBUG] Fetch URL: ${fetchUrl}`);
         console.log(`[DEBUG] Headers:`, headers);
 
-        const res = await fetch(proxyUrl, { headers });
+        const res = await fetch(fetchUrl, { headers });
         console.log(`[DEBUG] Response Status: ${res.status} ${res.statusText}`);
 
         if (!res.ok) {
