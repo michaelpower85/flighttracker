@@ -1,0 +1,51 @@
+/* Custom styles to supplement Tailwind */
+
+/* Leaflet Popup Styling - make it match dark theme */
+.leaflet-popup-content-wrapper {
+    background-color: rgba(17, 24, 39, 0.95) !important;
+    color: #fff !important;
+    border: 1px solid rgba(55, 65, 81, 0.5);
+    border-radius: 0.75rem !important;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+.leaflet-popup-tip {
+    background-color: rgba(17, 24, 39, 0.95) !important;
+}
+
+/* Plane icon rotation transition */
+.plane-icon {
+    transition: transform 1s ease-in-out;
+    transform-origin: center center;
+}
+
+/* Hide default attribution for a cleaner look or restyle it */
+.leaflet-control-attribution {
+    background-color: rgba(17, 24, 39, 0.6) !important;
+    color: #9ca3af !important;
+    backdrop-filter: blur(4px);
+    border-top-left-radius: 0.5rem;
+}
+.leaflet-control-attribution a {
+    color: #60a5fa !important;
+}
+
+/* Custom zoom control styling */
+.leaflet-bar {
+    border: 1px solid rgba(55, 65, 81, 0.8) !important;
+    border-radius: 0.5rem !important;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+.leaflet-bar a {
+    background-color: rgba(31, 41, 55, 0.9) !important;
+    color: #e5e7eb !important;
+    border-bottom: 1px solid rgba(55, 65, 81, 0.8) !important;
+    transition: background-color 0.2s;
+}
+.leaflet-bar a:hover {
+    background-color: rgba(55, 65, 81, 0.9) !important;
+}
+.leaflet-bar a:last-child {
+    border-bottom: none !important;
+}
